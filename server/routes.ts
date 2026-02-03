@@ -4,68 +4,34 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 
-type RapidApiImageResponse = unknown;
-
-function pickFirstString(value: any): string | undefined {
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) {
-    const first = value.find((v) => typeof v === "string");
-    return typeof first === "string" ? first : undefined;
-  }
-  return undefined;
-}
-
-function extractBase64Images(payload: RapidApiImageResponse): { mimeType: string; dataBase64: string }[] {
-  const p: any = payload;
-
-  // Try common shapes without assuming exact provider schema.
-  const candidates: any[] = [];
-
-  // { data: [ { b64_json }, ... ] } or { data: [ { url } ... ] }
-  if (Array.isArray(p?.data)) candidates.push(...p.data);
-  // { images: [ ... ] }
-  if (Array.isArray(p?.images)) candidates.push(...p.images);
-  // { result: { images: [...] } }
-  if (Array.isArray(p?.result?.images)) candidates.push(...p.result.images);
-  // { output: [...] }
-  if (Array.isArray(p?.output)) candidates.push(...p.output);
-
+function extractBase64Images(payload: any): { mimeType: string; dataBase64: string }[] {
   const images: { mimeType: string; dataBase64: string }[] = [];
-
-  for (const c of candidates) {
-    if (!c) continue;
-
-    // OpenAI-like: { b64_json: "..." }
-    const b64 = pickFirstString(c?.b64_json) ?? pickFirstString(c?.base64) ?? pickFirstString(c?.b64);
-    if (b64) {
-      images.push({ mimeType: "image/png", dataBase64: b64 });
-      continue;
-    }
-
-    // Data URL: "data:image/png;base64,..."
-    const dataUrl = pickFirstString(c?.data_url) ?? (typeof c === "string" && c.startsWith("data:") ? c : undefined);
-    if (dataUrl) {
-      const match = /^data:(.+?);base64,(.+)$/.exec(dataUrl);
-      if (match) {
-        images.push({ mimeType: match[1], dataBase64: match[2] });
-      }
-    }
-  }
-
-  // Some APIs may return a top-level array of base64 strings
-  if (images.length === 0 && Array.isArray(p)) {
-    for (const item of p) {
-      if (typeof item === "string") {
-        if (item.startsWith("data:")) {
-          const match = /^data:(.+?);base64,(.+)$/.exec(item);
-          if (match) images.push({ mimeType: match[1], dataBase64: match[2] });
-        } else {
-          images.push({ mimeType: "image/png", dataBase64: item });
+  
+  // Try to find images in the payload based on common RapidAPI patterns
+  if (payload && typeof payload === 'object') {
+    // OpenAI-style response: { data: [{ b64_json: '...' }] }
+    if (Array.isArray(payload.data)) {
+      payload.data.forEach((item: any) => {
+        if (item.b64_json) {
+          images.push({ mimeType: "image/png", dataBase64: item.b64_json });
+        } else if (item.url && item.url.startsWith('data:')) {
+           const match = item.url.match(/^data:([^;]+);base64,(.+)$/);
+           if (match) {
+             images.push({ mimeType: match[1], dataBase64: match[2] });
+           }
         }
-      }
+      });
+    }
+    // Simple array response
+    else if (Array.isArray(payload)) {
+        payload.forEach((item: any) => {
+            if (typeof item === 'string' && item.length > 100) {
+                 images.push({ mimeType: "image/png", dataBase64: item });
+            }
+        });
     }
   }
-
+  
   return images;
 }
 
@@ -74,14 +40,12 @@ async function callRapidApiGenerateImage(input: {
   model: string;
   n: number;
   size: string;
-}): Promise<{ images: { mimeType: string; dataBase64: string }[]; raw: any }>{
+}): Promise<{ images: { mimeType: string; dataBase64: string }[]; raw: any }> {
   const key = process.env.RAPIDAPI_KEY;
   if (!key) {
     throw new Error("RAPIDAPI_KEY must be set");
   }
 
-  // RapidAPI: use the OpenAI-style Images API if the hub supports it.
-  // Host header is required by RapidAPI for this provider.
   const url = "https://xai-all-models.p.rapidapi.com/v1/images/generations";
 
   const res = await fetch(url, {
@@ -109,14 +73,8 @@ async function callRapidApiGenerateImage(input: {
   }
 
   if (!res.ok) {
-    const msg =
-      payload?.error?.message ??
-      payload?.message ??
-      `RapidAPI request failed (${res.status})`;
-    const err = new Error(msg);
-    (err as any).status = res.status;
-    (err as any).payload = payload;
-    throw err;
+    const msg = payload?.error?.message ?? payload?.message ?? `RapidAPI request failed (${res.status})`;
+    throw new Error(msg);
   }
 
   const images = extractBase64Images(payload);
@@ -127,7 +85,7 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express,
 ): Promise<Server> {
-  app.get("/api/health", (_req, res) => {
+  app.get(api.health.path, (_req, res) => {
     res.json({ ok: true });
   });
 
@@ -160,7 +118,7 @@ export async function registerRoutes(
         });
         images = out.images;
         if (images.length === 0) {
-          error = "No images returned by provider.";
+          error = "No images returned by provider. Check RapidAPI response.";
         }
       } catch (e: any) {
         error = e?.message ?? "Image generation failed";
