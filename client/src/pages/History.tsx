@@ -38,9 +38,9 @@ export default function History() {
       query.length === 0
         ? list
         : list.filter((it) => {
-            const s = `${it.prompt} ${it.model} ${it.size}`.toLowerCase();
-            return s.includes(query);
-          });
+          const s = `${it.prompt} ${it.model} ${it.size}`.toLowerCase();
+          return s.includes(query);
+        });
 
     return filtered
       .slice()
@@ -92,7 +92,7 @@ export default function History() {
           <GlowCard className="p-5 sm:p-6 lg:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-lg sm:text-xl font-bold" style={{ fontFamily: "var(--font-serif)" }}>
+                <div className="text-lg sm:text-xl font-bold font-serif">
                   Library
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -248,7 +248,7 @@ export default function History() {
           <GlowCard className="p-5 sm:p-6 lg:p-7">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-lg sm:text-xl font-bold" style={{ fontFamily: "var(--font-serif)" }}>
+                <div className="text-lg sm:text-xl font-bold font-serif">
                   Details
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">

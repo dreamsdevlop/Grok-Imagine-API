@@ -22,13 +22,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Aperture, Sparkles, Wand2, Loader2 } from "lucide-react";
 import type { CreateImageInput } from "@shared/routes";
-
-const MODELS = [
-  { id: "grok-2-image", label: "Grok 2 Image" },
-  { id: "grok-vision-beta", label: "Grok Vision (beta)" },
-  { id: "sdxl-turbo", label: "SDXL Turbo" },
-  { id: "flux-schnell", label: "Flux Schnell" },
-] as const;
+import { ModelSelector } from "@/components/ModelSelector";
 
 const SIZES = [
   { id: "512x512", label: "512", hint: "Fast previews" },
@@ -43,7 +37,7 @@ export default function Generator() {
   const [prompt, setPrompt] = useState(
     "A neon-lit koi fish made of liquid chrome, swimming through a dark glass ocean, cinematic lighting, ultra-detailed, 35mm photo, soft bloom",
   );
-  const [model, setModel] = useState<string>(MODELS[0].id);
+  const [model, setModel] = useState<string>("stabilityai/stable-diffusion-3.5-large");
   const [size, setSize] = useState<CreateImageInput["size"]>("1024x1024");
   const [n, setN] = useState<number>(2);
 
@@ -51,10 +45,6 @@ export default function Generator() {
 
   const result = create.data;
 
-  const modelLabel = useMemo(
-    () => MODELS.find((m) => m.id === model)?.label ?? model,
-    [model],
-  );
 
   useEffect(() => {
     if (create.isError) {
@@ -96,307 +86,196 @@ export default function Generator() {
 
       <TopBar
         title={
-          <span>
-            Generate{" "}
-            <span className="text-gradient">images</span> with style
+          <span className="font-black text-white uppercase tracking-tighter">
+            IMAGINE <span className="text-neutral-500">ENGINE</span>
           </span>
         }
-        subtitle={
-          <span>
-            Precision controls, premium gallery output. Build a prompt, pick a model, and
-            ship visuals.
-          </span>
-        }
+        subtitle="Prompt-to-pixel synthesis with high-fidelity control over resolution and model parameters."
         right={
           <div className="hidden md:flex items-center gap-2">
-            <Badge className="rounded-full border border-white/10 bg-white/5 text-foreground/90">
-              {modelLabel}
+            <Badge variant="outline" className="rounded-lg border-neutral-700 bg-neutral-800 text-[10px] font-black uppercase text-neutral-300">
+              {model.split("/").pop()}
             </Badge>
-            <Badge className="rounded-full border border-white/10 bg-white/5 text-foreground/90">
+            <Badge variant="outline" className="rounded-lg border-neutral-700 bg-neutral-800 text-[10px] font-black uppercase text-neutral-300">
               {size}
             </Badge>
           </div>
         }
       />
 
-      <main className="relative z-[1] max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_.9fr] gap-6 lg:gap-8 items-start">
+      <main className="max-w-7xl mx-auto px-6 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left: form */}
-          <GlowCard className="p-5 sm:p-6 lg:p-7">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="inline-flex items-center gap-2">
-                  <div className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-white/10">
-                    <Wand2 className="h-4 w-4 text-primary" />
+          <div className="lg:col-span-7 space-y-6">
+            <div className="p-8 border border-neutral-800 bg-neutral-900 rounded-2xl shadow-sm">
+              <div className="flex items-start justify-between gap-4 mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-neutral-800 border border-neutral-700 flex items-center justify-center">
+                    <Wand2 className="h-5 w-5 text-neutral-400" />
                   </div>
-                  <h2 className="text-xl sm:text-2xl">Prompt composer</h2>
+                  <div>
+                    <h2 className="text-xl font-black uppercase tracking-tighter text-white">Neural Composer</h2>
+                    <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Direct Directive Input</p>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Describe the subject, style, lighting, and camera. The more intentional, the better.
-                </p>
-              </div>
-              <CopyButton text={prompt} data-testid="button-copy-prompt" />
-            </div>
-
-            <div className="mt-5">
-              <label className="text-sm font-semibold text-foreground/90">
-                Prompt
-              </label>
-              <div className="mt-2">
-                <Textarea
-                  data-testid="input-prompt"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe what you want to see…"
-                  className={cn(
-                    "min-h-[160px] resize-y rounded-2xl",
-                    "bg-white/[0.03] border-white/10",
-                    "focus-visible:ring-4 focus-visible:ring-ring/20 focus-visible:border-primary/40",
-                    "pretty-scroll",
-                  )}
-                />
+                <CopyButton text={prompt} />
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                {quickChips.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() =>
-                      setPrompt((p) =>
-                        p.includes(c) ? p : `${p.trim().replace(/\s+$/, "")}, ${c}`,
-                      )
-                    }
-                    className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-semibold",
-                      "border border-white/10 bg-white/5 text-foreground/85",
-                      "hover:bg-white/10 hover:-translate-y-[1px] active:translate-y-0",
-                      "transition-all duration-200",
-                      "focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20",
-                    )}
-                  >
-                    + {c}
-                  </button>
-                ))}
-              </div>
-            </div>
+              <div className="space-y-8">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 block mb-3 px-1">
+                    Directive Buffer
+                  </label>
+                  <Textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Enter visual descriptors..."
+                    className="min-h-[160px] resize-none rounded-xl bg-neutral-950/50 border-neutral-800 text-lg focus-visible:ring-emerald-500/20 pretty-scroll"
+                  />
 
-            <Separator className="my-6 bg-white/10" />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-foreground/90">
-                  Model
-                </label>
-                <Select value={model} onValueChange={setModel}>
-                  <SelectTrigger
-                    data-testid="select-model"
-                    className={cn(
-                      "mt-2 h-12 rounded-2xl",
-                      "bg-white/[0.03] border-white/10",
-                      "focus:ring-4 focus:ring-ring/20 focus:border-primary/40",
-                    )}
-                  >
-                    <SelectValue placeholder="Select model" />
-                  </SelectTrigger>
-                  <SelectContent className="border-white/10 bg-card/95 backdrop-blur-xl">
-                    {MODELS.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.label}
-                      </SelectItem>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {quickChips.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() =>
+                          setPrompt((p) =>
+                            p.includes(c) ? p : `${p.trim().replace(/\s+$/, "")}, ${c}`,
+                          )
+                        }
+                        className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-neutral-800 bg-neutral-900/50 text-neutral-500 hover:bg-neutral-800 hover:text-white transition-all duration-300"
+                      >
+                        + {c}
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Tip: switch models to explore aesthetics.
-                </p>
-              </div>
+                  </div>
+                </div>
 
-              <div>
-                <label className="text-sm font-semibold text-foreground/90">
-                  Size
-                </label>
-                <Select
-                  value={size}
-                  onValueChange={(v) => setSize(v as CreateImageInput["size"])}
-                >
-                  <SelectTrigger
-                    data-testid="select-size"
-                    className={cn(
-                      "mt-2 h-12 rounded-2xl",
-                      "bg-white/[0.03] border-white/10",
-                      "focus:ring-4 focus:ring-ring/20 focus:border-primary/40",
-                    )}
-                  >
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent className="border-white/10 bg-card/95 backdrop-blur-xl">
-                    {SIZES.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        <div className="flex items-center justify-between gap-8">
-                          <span>{s.label}</span>
-                          <span className="text-xs text-muted-foreground">{s.hint}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Higher sizes yield more detail.
-                </p>
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pb-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 block px-1">
+                      Model Core
+                    </label>
+                    <ModelSelector value={model} onValueChange={setModel} type="image" />
+                  </div>
 
-              <div>
-                <label className="text-sm font-semibold text-foreground/90">
-                  Count
-                </label>
-                <Select
-                  value={String(n)}
-                  onValueChange={(v) => setN(Number(v))}
-                >
-                  <SelectTrigger
-                    data-testid="select-count"
-                    className={cn(
-                      "mt-2 h-12 rounded-2xl",
-                      "bg-white/[0.03] border-white/10",
-                      "focus:ring-4 focus:ring-ring/20 focus:border-primary/40",
-                    )}
-                  >
-                    <SelectValue placeholder="1" />
-                  </SelectTrigger>
-                  <SelectContent className="border-white/10 bg-card/95 backdrop-blur-xl">
-                    {[1, 2, 3, 4].map((k) => (
-                      <SelectItem key={k} value={String(k)}>
-                        {k} image{k === 1 ? "" : "s"}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Generate up to 4 variations.
-                </p>
-              </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 block px-1">
+                      Resolution
+                    </label>
+                    <Select
+                      value={size}
+                      onValueChange={(v) => setSize(v as CreateImageInput["size"])}
+                    >
+                      <SelectTrigger className="h-11 rounded-xl bg-neutral-800 border-neutral-700 text-neutral-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-neutral-900 border-neutral-800">
+                        {SIZES.map((s) => (
+                          <SelectItem key={s.id} value={s.id} className="focus:bg-neutral-800">
+                            <span className="font-bold text-xs">{s.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="flex items-end">
-                <Button
-                  type="button"
-                  data-testid="button-generate"
-                  onClick={onGenerate}
-                  disabled={!canGenerate}
-                  className={cn(
-                    "h-12 w-full rounded-2xl font-semibold",
-                    "bg-gradient-to-r from-primary to-accent",
-                    "text-primary-foreground shadow-[0_18px_55px_rgba(0,0,0,.55)]",
-                    "hover:shadow-[0_22px_65px_rgba(0,0,0,.65)] hover:-translate-y-0.5",
-                    "active:translate-y-0 active:shadow-[0_14px_40px_rgba(0,0,0,.55)]",
-                    "disabled:opacity-60 disabled:transform-none",
-                    "transition-all duration-200 ease-out ring-focus",
-                  )}
-                >
-                  {create.isPending ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating…
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Generate
-                    </span>
-                  )}
-                </Button>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 block px-1">
+                      Frame Density
+                    </label>
+                    <Select
+                      value={String(n)}
+                      onValueChange={(v) => setN(Number(v))}
+                    >
+                      <SelectTrigger className="h-11 rounded-xl bg-neutral-800 border-neutral-700 text-neutral-200">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-neutral-900 border-neutral-800">
+                        {[1, 2, 3, 4].map((k) => (
+                          <SelectItem key={k} value={String(k)} className="focus:bg-neutral-800">
+                            {k} frame{k === 1 ? "" : "s"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-end">
+                    <Button
+                      onClick={onGenerate}
+                      disabled={!canGenerate}
+                      className="h-11 w-full rounded-xl font-black uppercase tracking-widest text-[11px] bg-neutral-100 hover:bg-white text-neutral-900 transition-all shadow-xl shadow-white/5"
+                    >
+                      {create.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Sparkles className="h-4 w-4 mr-2" />
+                      )}
+                      Initiate Synthesis
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </GlowCard>
+          </div>
 
           {/* Right: output */}
-          <div className="space-y-6">
-            <GlowCard className="p-5 sm:p-6 lg:p-7">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="inline-flex items-center gap-2">
-                    <div className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-white/10">
-                      <Aperture className="h-4 w-4 text-primary" />
-                    </div>
-                    <h2 className="text-xl sm:text-2xl">Output</h2>
+          <div className="lg:col-span-5 space-y-6">
+            <div className="p-8 border border-neutral-800 bg-neutral-900 rounded-2xl shadow-sm min-h-[500px]">
+              <div className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-800">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-lg bg-neutral-800 border border-neutral-700 flex items-center justify-center">
+                    <Aperture className="h-4 w-4 text-neutral-400" />
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Your generated images appear here. Download and iterate.
-                  </p>
+                  <h2 className="text-lg font-black uppercase tracking-tighter text-white">Visual Output</h2>
                 </div>
-                {result?.error ? (
-                  <Badge className="rounded-full bg-destructive/15 text-destructive border border-destructive/30">
-                    Error
-                  </Badge>
-                ) : result?.images?.length ? (
-                  <Badge className="rounded-full border border-white/10 bg-white/5 text-foreground/90">
-                    {result.images.length} image{result.images.length === 1 ? "" : "s"}
+                {result?.images?.length ? (
+                  <Badge variant="outline" className="border-neutral-700 text-neutral-500 font-black text-[9px] uppercase">
+                    {result.images.length} Units
                   </Badge>
                 ) : null}
               </div>
 
-              <div className="mt-5">
+              <div>
                 {create.isPending ? (
-                  <div className="surface-glass rounded-3xl p-6">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-10 w-10">
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/25 to-accent/20 blur-lg opacity-70" />
-                        <div className="relative grid h-10 w-10 place-items-center rounded-2xl bg-white/5 ring-1 ring-white/10">
-                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        </div>
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold">Generating</div>
-                        <div className="text-xs text-muted-foreground">
-                          This can take a few seconds depending on the model.
-                        </div>
-                      </div>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-3 p-4 rounded-xl bg-neutral-950/50 border border-neutral-800 border-dashed">
+                      <Loader2 className="h-4 w-4 animate-spin text-neutral-600" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-neutral-600">Processing Stream...</span>
                     </div>
-                    <div className="mt-5 grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       {Array.from({ length: Math.max(2, Math.min(4, n)) }).map((_, i) => (
                         <div
                           key={i}
-                          className="aspect-square rounded-3xl border border-white/10 bg-white/[0.03] animate-pulse"
+                          className="aspect-square rounded-2xl bg-neutral-800/50 border border-neutral-700 animate-pulse"
                         />
                       ))}
                     </div>
                   </div>
                 ) : result?.images?.length ? (
-                  <ImageGrid images={result.images} testId="grid-images" />
+                  <ImageGrid images={result.images} />
                 ) : (
-                  <EmptyState
-                    icon={<Sparkles className="h-6 w-6 text-primary" />}
-                    title="No images yet"
-                    description="Write a prompt and hit Generate. Your gallery will bloom here with crisp squares and downloadable files."
-                  />
-                )}
-
-                {result?.error ? (
-                  <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm">
-                    <div className="font-semibold text-destructive">Server error</div>
-                    <div className="mt-1 text-muted-foreground">
-                      {result.error}
-                    </div>
+                  <div className="flex flex-col items-center justify-center py-20 opacity-20">
+                    <Sparkles className="h-12 w-12 mb-4" />
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Buffer Empty</p>
                   </div>
-                ) : null}
+                )}
               </div>
-            </GlowCard>
+            </div>
 
-            <div className="surface-glass rounded-3xl p-5 sm:p-6">
-              <div className="text-sm font-semibold">Prompt quality checklist</div>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+            <div className="p-6 rounded-2xl border border-neutral-800 bg-neutral-900/50">
+              <h3 className="text-[9px] font-black uppercase tracking-widest text-neutral-600 mb-4">Precision Checklist</h3>
+              <div className="grid grid-cols-2 gap-3">
                 {[
-                  "Subject: who/what is the focus?",
-                  "Style: photo, illustration, 3D, anime…",
-                  "Lighting: rim, volumetric, softbox…",
-                  "Lens: 35mm, 85mm, macro…",
+                  "Subject Focal Point",
+                  "Optical Parameters",
+                  "Atmospheric Haze",
+                  "Chroma Balance",
                 ].map((t) => (
-                  <div
-                    key={t}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
-                  >
-                    <span className="text-foreground/90 font-semibold">•</span>{" "}
-                    {t}
+                  <div key={t} className="flex items-center gap-2">
+                    <div className="h-1 w-1 rounded-full bg-neutral-700 shrink-0" />
+                    <span className="text-[10px] font-bold text-neutral-500 uppercase">{t}</span>
                   </div>
                 ))}
               </div>

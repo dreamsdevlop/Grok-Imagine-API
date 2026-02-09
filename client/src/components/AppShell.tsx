@@ -25,6 +25,16 @@ import {
   ExternalLink,
   Github,
   Keyboard,
+  LayoutDashboard,
+  MessageSquare,
+  Video,
+  Wand2,
+  FolderOpen,
+  Box,
+  Settings,
+  HelpCircle,
+  BarChart3,
+  Swords,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
@@ -44,11 +54,11 @@ function Brand() {
       </div>
       <div className="leading-tight">
         <div className="text-[15px] font-semibold tracking-tight">
-          <span className="text-gradient" style={{ fontFamily: "var(--font-serif)" }}>
-            Imagine Studio
+          <span className="text-gradient font-serif uppercase tracking-tighter">
+            STUDIO
           </span>
         </div>
-        <div className="text-xs text-muted-foreground">Grok-style generations</div>
+        <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold opacity-50">Multi-Model AI</div>
       </div>
     </div>
   );
@@ -57,8 +67,18 @@ function Brand() {
 export default function AppShell({ children }: PropsWithChildren) {
   const [loc] = useLocation();
   const active = useMemo(() => {
-    if (loc.startsWith("/history")) return "history";
-    return "generator";
+    if (loc === "/") return "dashboard";
+    if (loc === "/generator") return "generator";
+    if (loc === "/chat") return "chat";
+    if (loc === "/video") return "video";
+    if (loc === "/history") return "history";
+    if (loc === "/projects") return "projects";
+    if (loc === "/tools") return "tools";
+    if (loc === "/models") return "models";
+    if (loc === "/settings") return "settings";
+    if (loc === "/analytics") return "analytics";
+    if (loc === "/comparison") return "comparison";
+    return "";
   }, [loc]);
 
   return (
@@ -85,8 +105,30 @@ export default function AppShell({ children }: PropsWithChildren) {
 
           <SidebarContent className="px-2">
             <SidebarGroup>
-              <SidebarGroupLabel className="text-[11px] tracking-widest text-muted-foreground/90">
-                Workspace
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 mb-2 px-3">
+                Overview
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "dashboard"}
+                      tooltip="Dashboard"
+                    >
+                      <Link href="/" className="group">
+                        <LayoutDashboard className="h-4 w-4" />
+                        <span>Dashboard</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-4">
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 mb-2 px-3">
+                Studio Tools
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -94,15 +136,111 @@ export default function AppShell({ children }: PropsWithChildren) {
                     <SidebarMenuButton
                       asChild
                       isActive={active === "generator"}
-                      tooltip="Generator"
+                      tooltip="Images"
                     >
-                      <Link
-                        href="/"
-                        data-testid="link-generator"
-                        className="group"
-                      >
+                      <Link href="/generator" className="group">
                         <ImageIcon className="h-4 w-4" />
-                        <span>Generator</span>
+                        <span>Images</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "chat"}
+                      tooltip="AI Chat"
+                    >
+                      <Link href="/chat" className="group">
+                        <MessageSquare className="h-4 w-4" />
+                        <span>AI Chat</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "video"}
+                      tooltip="Video Engine"
+                    >
+                      <Link href="/video" className="group">
+                        <Video className="h-4 w-4" />
+                        <span>Video</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "comparison"}
+                      tooltip="Model Battleground"
+                    >
+                      <Link href="/comparison" className="group">
+                        <Swords className="h-4 w-4" />
+                        <span>Battleground</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "tools"}
+                      tooltip="AI Toolkit"
+                    >
+                      <Link href="/tools" className="group text-muted-foreground">
+                        <Wand2 className="h-4 w-4" />
+                        <span>Toolkit</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-4">
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 mb-2 px-3">
+                Management
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "projects"}
+                      tooltip="Projects"
+                    >
+                      <Link href="/projects" className="group">
+                        <FolderOpen className="h-4 w-4" />
+                        <span>Projects</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "models"}
+                      tooltip="Model Shelf"
+                    >
+                      <Link href="/models" className="group text-muted-foreground">
+                        <Box className="h-4 w-4" />
+                        <span>Marketplace</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "analytics"}
+                      tooltip="Usage Statistics"
+                    >
+                      <Link href="/analytics" className="group">
+                        <BarChart3 className="h-4 w-4" />
+                        <span>Analytics</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -113,10 +251,44 @@ export default function AppShell({ children }: PropsWithChildren) {
                       isActive={active === "history"}
                       tooltip="History"
                     >
-                      <Link href="/history" data-testid="link-history">
+                      <Link href="/history" className="group">
                         <History className="h-4 w-4" />
-                        <span>History</span>
+                        <span>History List</span>
                       </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            <SidebarGroup className="mt-4">
+              <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 mb-2 px-3">
+                System
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={active === "settings"}
+                      tooltip="Configuration"
+                    >
+                      <Link href="/settings" className="group">
+                        <Settings className="h-4 w-4" />
+                        <span>Settings</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip="Documentation"
+                    >
+                      <div className="flex items-center gap-2 px-3 py-2 text-sm text-white/40 cursor-not-allowed">
+                        <HelpCircle className="h-4 w-4" />
+                        <span>Help</span>
+                      </div>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 </SidebarMenu>
